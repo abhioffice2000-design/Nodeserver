@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecruitSync | Talent Management Reimagined</title>
+    <meta name="description" content="A powerful and sleek recruiting server for modern talent acquisition.">
+    <link rel="stylesheet" href="index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+    
+    <main class="dashboard">
+        <aside class="sidebar glass">
+            <div class="logo">
+                <span class="logo-icon">▲</span>
+                <span class="logo-text">RecruitSync</span>
+            </div>
+            <nav>
+                <a href="#" class="active">Overview</a>
+                <a href="#">Candidates</a>
+                <a href="#">Open Jobs</a>
+                <a href="#">Schedule</a>
+                <a href="#">Analytics</a>
+            </nav>
+            <div class="user-profile">
+                <div class="avatar"></div>
+                <div class="user-info">
+                    <p class="name">HR Admin</p>
+                    <p class="role">Talent Lead</p>
+                </div>
+            </div>
+        </aside>
+
+        <section class="content">
+            <header class="top-nav">
+                <h1>Welcome back, <span class="gradient-text">Recruiter!</span></h1>
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="simulateActivity()">Simulate Activity</button>
+                    <button class="btn btn-primary">Add New Candidate</button>
+                </div>
+            </header>
+
+            <div class="stats-grid">
+                <div class="stat-card glass hover-effect">
+                    <p class="stat-label">Total Applications</p>
+                    <h2 class="stat-value">1,280</h2>
+                    <span class="stat-change positive">+12% vs last month</span>
+                </div>
+                <div class="stat-card glass hover-effect">
+                    <p class="stat-label">Interview Stage</p>
+                    <h2 class="stat-value">42</h2>
+                    <span class="stat-change">Active this week</span>
+                </div>
+                <div class="stat-card glass hover-effect">
+                    <p class="stat-label">Offers Extended</p>
+                    <h2 class="stat-value">8</h2>
+                    <span class="stat-change positive">+2 new today</span>
+                </div>
+            </div>
+
+            <div class="recent-activity glass">
+                <h3>Live Feed</h3>
+                <ul class="activity-list" id="activity-list">
+                    <li class="activity-item">
+                        <span class="time">2m ago</span>
+                        <p><strong>Alex Johnson</strong> applied for Senior Frontend Developer</p>
+                    </li>
+                    <li class="activity-item">
+                        <span class="time">15m ago</span>
+                        <p><strong>Interview Scheduled</strong> for Sarah Kim next Tuesday</p>
+                    </li>
+                    <li class="activity-item">
+                        <span class="time">1h ago</span>
+                        <p><strong>Offer Accepted</strong> by Marcus Wright for Product Manager</p>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const activityList = document.getElementById('activity-list');
+
+        function addActivity(text, time = 'Just now') {
+            const li = document.createElement('li');
+            li.className = 'activity-item slide-in';
+            li.innerHTML = `
+                <span class="time">${time}</span>
+                <p>${text}</p>
+            `;
+            activityList.prepend(li);
+        }
+
+        socket.on('candidateApplied', (data) => {
+            const text = `<strong>${data.name || 'A new candidate'}</strong> applied for ${data.job || 'a position'}`;
+            addActivity(text);
+        });
+
+        socket.on('userLogin', (data) => {
+            addActivity(`<strong>${data.user || 'User'}</strong> logged in`, 'Just now');
+        });
+
+        socket.on('userLogout', (data) => {
+            addActivity(`<strong>${data.user || 'User'}</strong> logged out`, 'Just now');
+        });
+
+        socket.on('connect', () => {
+            console.log('Connected to RecruitSync Realtime Feed');
+        });
+
+        async function simulateActivity() {
+            const activities = [
+                { type: 'CANDIDATE_APPLIED', data: { name: 'Jordan Smith', job: 'Lead Designer' } },
+                { type: 'LOGIN', data: { user: 'Sarah Admin' } },
+                { type: 'CANDIDATE_APPLIED', data: { name: 'Alex Rivera', job: 'DevOps Engineer' } }
+            ];
+            
+            const random = activities[Math.floor(Math.random() * activities.length)];
+
+            await fetch('/notify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(random)
+            });
+        }
+    </script>
+</body>
+</html>
